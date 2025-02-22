@@ -20,9 +20,44 @@ export const register = async (req, res) => {
 
     res.status(201).json({ message: "User registered successfully", token: generateToken(user._id) });
   } catch (error) {
+    console.error("Registration Error:", error); 
     res.status(500).json({ message: "Registration failed", error });
   }
 };
+
+
+
+
+
+export const register = async (req, res) => {
+  try {
+    const { name, email, password, categories } = req.body;
+
+    if (!categories || categories.length === 0) {
+      return res.status(400).json({ message: "Categories are required" });
+    }
+
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await User.create({ 
+      name, 
+      email, 
+      password: hashedPassword, 
+      categories: Array.isArray(categories) ? categories : categories.split(",") 
+    });
+
+    res.status(201).json({ message: "User registered successfully" }); // ✅ Token removed
+  } catch (error) {
+    console.error("Registration Error:", error);
+    res.status(500).json({ message: "Registration failed", error: error.message });
+  }
+};
+
+
 
 
 export const login = async (req, res) => {
